@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>朋睿國際 CRM V3.3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { psf: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 800: '#075985', 900: '#0c4a6e' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .drag-card { cursor: grab; }
+        .drag-card:active { cursor: grabbing; }
+        .page-enter { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 font-sans h-screen flex overflow-hidden">
+
+    <!-- L1: Sidebar -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-30 flex-shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-slate-700 bg-slate-800 cursor-pointer" onclick="router('dashboard')">
+            <h1 class="text-lg font-bold tracking-wider"><i class="fa-solid fa-layer-group text-psf-500 mr-2"></i> 朋睿 CRM</h1>
+        </div>
+        <nav class="flex-1 py-6 space-y-1">
+            <div class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">總覽層 (L1)</div>
+            <a href="#" onclick="router('dashboard')" id="nav-dashboard" class="nav-item flex items-center px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition border-l-4 border-transparent"><i class="fa-solid fa-chart-pie w-6"></i> 營運儀表板</a>
+            <a href="#" onclick="router('leads')" id="nav-leads" class="nav-item flex items-center px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition border-l-4 border-transparent"><i class="fa-solid fa-filter w-6"></i> 線索池 (Leads)</a>
+            <a href="#" onclick="router('pipeline')" id="nav-pipeline" class="nav-item flex items-center px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition border-l-4 border-transparent"><i class="fa-solid fa-bars-progress w-6"></i> 案件總管</a>
+            <a href="#" onclick="router('partners')" id="nav-partners" class="nav-item flex items-center px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition border-l-4 border-transparent"><i class="fa-solid fa-building-columns w-6"></i> 銀行窗口庫</a>
+            <div id="l2-menu" class="hidden mt-8">
+                <div class="px-6 text-xs font-bold text-psf-500 uppercase tracking-wider mb-2 border-t border-slate-700 pt-4">案件執行層 (L2)</div>
+                <div class="px-6 mb-4"><div class="text-sm font-bold text-white truncate" id="l2-case-name">鴻海精密擴廠案</div><div class="text-xs text-slate-400" id="l2-case-id">CASE-2026001</div></div>
+                <a href="#" onclick="openCaseTab('overview')" class="l2-item flex items-center px-6 py-2 text-slate-300 hover:text-white hover:bg-slate-800"><i class="fa-solid fa-eye w-6"></i> 案件概況</a>
+                <a href="#" onclick="openCaseTab('docs')" class="l2-item flex items-center px-6 py-2 text-slate-300 hover:text-white hover:bg-slate-800"><i class="fa-solid fa-folder-open w-6"></i> 文件中心</a>
+                <a href="#" onclick="openCaseTab('bank')" class="l2-item flex items-center px-6 py-2 text-slate-300 hover:text-white hover:bg-slate-800"><i class="fa-solid fa-magnifying-glass-dollar w-6"></i> 送件評估</a>
+                <a href="#" onclick="openCaseTab('finance')" class="l2-item flex items-center px-6 py-2 text-slate-300 hover:text-white hover:bg-slate-800"><i class="fa-solid fa-calculator w-6"></i> 佣金試算</a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-8 z-20">
+            <div class="flex items-center gap-4">
+                <button id="back-btn" onclick="goBack()" class="hidden text-slate-500 hover:text-slate-800"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+                <h2 id="page-title" class="text-2xl font-bold text-slate-800">儀表板</h2>
+            </div>
+            <div class="flex items-center gap-3"><button onclick="createLead()" class="bg-psf-600 hover:bg-psf-700 text-white px-4 py-2 rounded-lg shadow transition"><i class="fa-solid fa-plus"></i> 建立新案</button></div>
+        </header>
+
+        <div id="view-container" class="flex-1 overflow-auto bg-slate-100 p-6 relative">
+            <!-- DASHBOARD -->
+            <div id="view-dashboard" class="view-section page-enter h-full flex flex-col space-y-6">
+                <div class="grid grid-cols-4 gap-6">
+                    <div onclick="router('pipeline')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 cursor-pointer hover:shadow-md transition transform hover:-translate-y-1"><div class="text-slate-500 text-sm mb-1">總核准金額 (Approved)</div><div class="text-3xl font-bold text-slate-800" id="dash-kpi-1">NT$ 0</div></div>
+                    <div onclick="router('pipeline')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500 cursor-pointer hover:shadow-md transition transform hover:-translate-y-1"><div class="text-slate-500 text-sm mb-1">總佣金金額 (Commission)</div><div class="text-3xl font-bold text-slate-800" id="dash-kpi-2">NT$ 0</div></div>
+                    <div onclick="router('pipeline')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500 cursor-pointer hover:shadow-md transition transform hover:-translate-y-1"><div class="text-slate-500 text-sm mb-1">已撥款金額 (Paid)</div><div class="text-3xl font-bold text-emerald-600" id="dash-kpi-3">NT$ 0</div></div>
+                    <div onclick="router('leads')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500 cursor-pointer hover:shadow-md transition transform hover:-translate-y-1"><div class="text-slate-500 text-sm mb-1">未撥款金額 (Unpaid)</div><div class="text-3xl font-bold text-red-600" id="dash-kpi-4">NT$ 0</div></div>
+                </div>
+                <div class="grid grid-cols-3 gap-6 flex-1 min-h-0">
+                    <div class="bg-white p-6 rounded-xl shadow-sm col-span-2 flex flex-col"><h3 class="font-bold text-slate-700 mb-4">角色分潤統計</h3><div class="flex-1 relative"><canvas id="chart-revenue"></canvas></div></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col"><h3 class="font-bold text-slate-700 mb-4">案件類型占比</h3><div class="flex-1 relative"><canvas id="chart-source"></canvas></div></div>
+                </div>
+                <div class="grid grid-cols-2 gap-6 h-64">
+                    <div class="bg-white p-6 rounded-xl shadow-sm overflow-hidden flex flex-col"><h3 class="font-bold text-slate-700 mb-4">🏆 最新案件歷程</h3><div class="space-y-3 overflow-y-auto" id="dash-list-container"></div></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm overflow-hidden flex flex-col"><h3 class="font-bold text-slate-700 mb-4">📅 待辦事項提醒</h3><div class="space-y-3 overflow-y-auto"><div class="flex items-center gap-3 p-3 bg-red-50 border-l-4 border-red-500 rounded"><div class="text-center w-12"><div class="text-xs text-red-500">FEB</div><div class="font-bold text-lg">05</div></div><div><div class="font-bold text-slate-800">補件截止日 - 鴻海案</div><div class="text-xs text-gray-500">差負責人身分證</div></div></div></div></div>
+                </div>
+            </div>
+
+            <!-- LEADS -->
+            <div id="view-leads" class="view-section page-enter hidden h-full flex flex-col">
+                <div class="flex justify-between items-center mb-6"><h1 class="text-2xl font-bold text-slate-800">潛在線索池 (Leads Pool)</h1><button onclick="createLead()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700"><i class="fa-solid fa-plus"></i> 新增線索</button></div>
+                <div class="flex gap-4 h-full pb-4 overflow-x-auto">
+                    <div class="w-80 flex-shrink-0 flex flex-col h-full bg-gray-200 bg-opacity-70 rounded-xl p-2"><div class="flex justify-between items-center mb-3 px-2 mt-1"><span class="font-bold text-slate-700 border-l-4 border-red-500 pl-2">未處理 (New)</span></div><div class="flex-1 space-y-3 overflow-y-auto drag-col" ondrop="dropLead(event, 'new')" ondragover="allowDrop(event)"></div></div>
+                    <div class="w-80 flex-shrink-0 flex flex-col h-full bg-gray-200 bg-opacity-70 rounded-xl p-2"><div class="flex justify-between items-center mb-3 px-2 mt-1"><span class="font-bold text-slate-700 border-l-4 border-yellow-500 pl-2">跟進中 (Working)</span></div><div class="flex-1 space-y-3 overflow-y-auto drag-col" ondrop="dropLead(event, 'working')" ondragover="allowDrop(event)"></div></div>
+                    <div class="w-80 flex-shrink-0 flex flex-col h-full bg-gray-200 bg-opacity-70 rounded-xl p-2"><div class="flex justify-between items-center mb-3 px-2 mt-1"><span class="font-bold text-slate-700 border-l-4 border-green-500 pl-2">需求確認 (Qualified)</span></div><div class="flex-1 space-y-3 overflow-y-auto drag-col" ondrop="dropLead(event, 'qualified')" ondragover="allowDrop(event)"></div></div>
+                </div>
+            </div>
+
+            <!-- PIPELINE -->
+            <div id="view-pipeline" class="view-section page-enter hidden h-full flex flex-col">
+                <div class="flex gap-4 mb-6">
+                    <button id="btn-flow-corp" onclick="renderPipeline('corp')" class="px-4 py-2 bg-white rounded-lg shadow-sm border border-psf-500 text-psf-600 font-bold transition">企業融資流程</button>
+                    <button id="btn-flow-startup" onclick="renderPipeline('startup')" class="px-4 py-2 bg-white rounded-lg shadow-sm border border-transparent text-gray-500 hover:text-gray-700 transition">青創貸款流程</button>
+                </div>
+                <div class="flex-1 overflow-x-auto"><div class="flex gap-4 h-full min-w-[2000px] pb-4" id="kanban-board"></div></div>
+            </div>
+
+            <!-- PARTNERS -->
+            <div id="view-partners" class="view-section page-enter hidden h-full flex flex-col">
+                <div class="flex gap-4 mb-6"><input type="text" placeholder="搜尋銀行/分行/經理..." class="flex-1 border p-2 rounded-lg shadow-sm"><button class="bg-white border px-4 py-2 rounded shadow-sm text-gray-600"><i class="fa-solid fa-filter"></i> 篩選</button></div>
+                <div class="grid grid-cols-3 gap-6 overflow-y-auto" id="partners-grid"></div>
+            </div>
+
+            <!-- CASE DETAIL -->
+            <div id="view-case-detail" class="view-section page-enter hidden h-full flex flex-col">
+                <div class="bg-white p-6 rounded-xl shadow-sm mb-6 flex justify-between items-start">
+                    <div><div class="flex items-center gap-3 mb-2"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-sm font-bold" id="detail-type">企業融資</span><h1 class="text-3xl font-bold text-slate-800" id="detail-title">鴻海精密</h1></div><div class="flex gap-6 text-sm text-gray-500" id="detail-info"></div></div>
+                    <div class="text-right flex flex-col items-end gap-2"><button onclick="alert('編輯資料功能開發中...')" class="text-gray-400 hover:text-gray-600 px-3 py-1 border rounded text-sm"><i class="fa-solid fa-pen"></i> 編輯資料</button></div>
+                </div>
+                <div class="flex-1 bg-white rounded-xl shadow-sm overflow-hidden flex"><div class="flex-1 p-8 overflow-y-auto" id="l2-content"><div class="mb-8"><h3 class="text-xl font-bold mb-4">企業里程碑 <button onclick="alert('新增里程碑...')" class="ml-2 text-sm text-gray-400"><i class="fa-solid fa-plus"></i></button></h3><div class="flex gap-4 overflow-x-auto pb-4" id="milestones-container"></div></div><h3 class="text-xl font-bold mb-4">互動紀錄 <button onclick="alert('新增紀錄...')" class="ml-2 text-sm text-gray-400"><i class="fa-solid fa-plus"></i></button></h3><div class="relative pl-8 border-l-2 border-gray-200 space-y-8" id="logs-container"></div></div></div>
+            </div>
+
+            <!-- DOCS -->
+            <div id="view-docs" class="view-section page-enter hidden h-full bg-white rounded-xl shadow-sm p-6 flex flex-col">
+                <div class="flex justify-between items-center mb-6 border-b pb-4"><h3 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-folder-open text-psf-600 mr-2"></i> 文件管理中心</h3><div class="flex items-center gap-3"><div class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold border border-red-200">缺件禁止送件</div><button class="bg-green-600 text-white px-4 py-2 rounded shadow" onclick="alert('已發送 Line 催件')"><i class="fa-brands fa-line"></i> 一鍵催件</button></div></div>
+                <div class="flex-1 overflow-y-auto space-y-8"><div class="bg-white border rounded-xl overflow-hidden shadow-sm"><table class="w-full text-left"><tbody class="divide-y text-sm"><tr><td class="p-3">401/403 報表</td><td class="p-3"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">● 已上傳</span></td><td class="p-3"><button onclick="alert('預覽文件...')" class="text-blue-600 hover:underline">預覽</button></td></tr></tbody></table></div></div>
+            </div>
+
+            <!-- BANK EVAL (New) -->
+            <div id="view-bank" class="view-section page-enter hidden h-full bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-4"><i class="fa-solid fa-magnifying-glass-dollar text-psf-600 mr-2"></i> 送件評估</h3>
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="space-y-4"><h4 class="font-bold text-lg text-slate-700">案件條件分析</h4><div class="bg-gray-50 p-4 rounded-lg space-y-2"><div class="flex justify-between"><span>產業別</span><span class="font-bold">製造業</span></div><div class="flex justify-between"><span>申請金額</span><span class="font-bold">5,000 萬</span></div></div></div>
+                    <div class="space-y-4"><h4 class="font-bold text-lg text-slate-700">推薦銀行</h4><div class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg cursor-pointer" onclick="alert('已選擇：玉山銀行')"><div class="flex items-center gap-3"><span class="bg-green-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span><div><div class="font-bold text-slate-800">玉山銀行</div><div class="text-xs text-gray-500">核貸率 85%</div></div></div><button class="text-xs bg-white border border-green-500 text-green-600 px-2 py-1 rounded">選擇</button></div></div>
+                </div>
+            </div>
+
+            <!-- FINANCE -->
+            <div id="view-finance" class="view-section page-enter hidden h-full bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-4"><i class="fa-solid fa-calculator text-psf-600 mr-2"></i> 佣金試算表</h3>
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="space-y-6"><h4 class="font-bold text-lg text-slate-700 border-l-4 border-green-500 pl-3">收入預估</h4><div class="bg-green-50 p-6 rounded-xl space-y-4"><div><label class="block text-sm font-bold text-gray-700">核貸金額</label><input type="text" id="finance-loan-amount" value="50,000,000" class="w-full border rounded p-2 text-right"></div><div><label class="block text-sm font-bold text-gray-700">總營收 (5%)</label><div class="w-full bg-white border rounded p-2 text-right">$ 2,500,000</div></div></div></div>
+                    <div class="space-y-6"><h4 class="font-bold text-lg text-slate-700 border-l-4 border-red-500 pl-3">分潤支出</h4><div class="bg-red-50 p-6 rounded-xl space-y-4" id="finance-partner-section"><div id="finance-partner-list"></div></div></div>
+                </div>
+                <div class="mt-8 pt-6 border-t flex justify-end"><div class="text-3xl font-bold text-psf-600">淨利待算</div></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const persons = [ { id: 'P001', name: 'Terry', role: 'Consultant' }, { id: 'P002', name: '王大明', role: 'Partner' }, { id: 'P003', name: 'Alex', role: 'Sales' } ];
+        const clients = [ { id: 'CL001', type: '公司', name: '鴻海精密工業', contact: '劉揚偉', created_at: '2025-12-01' }, { id: 'CL002', type: '個人', name: '巷口早餐店', contact: '張老闆', created_at: '2026-01-10' } ];
+        const cases = [ { id: 'CASE-2026001', client_id: 'CL001', type: 'corp', req_amount: '50000000', approved_amount: '50000000', stage: 2, owner_id: 'P001', deal_date: '2d ago', grant_date: '', rule_id: 'R2025A', status: 'active' }, { id: 'CASE-2026002', client_id: 'CL002', type: 'startup', req_amount: '500000', approved_amount: '0', stage: 1, owner_id: 'P003', deal_date: '5d ago', grant_date: '', rule_id: 'R2025B', status: 'active' } ];
+        const caseParticipants = [ { case_id: 'CASE-2026001', person_id: 'P001', role_type: 'Consultant', rate: 30, active: true, note: '主責顧問' }, { case_id: 'CASE-2026001', person_id: 'P002', role_type: 'Introducer', rate: 15, active: true, note: '會計師轉介' }, { case_id: 'CASE-2026001', person_id: 'P003', role_type: 'Assistant', rate: 5, active: true, note: '協助送件' }, { case_id: 'CASE-2026002', person_id: 'P003', role_type: 'Sales', rate: 40, active: true, note: '陌生開發' } ];
+        const caseLogs = [ { case_id: 'CASE-2026001', stage: '1. 初步諮詢', person_id: 'P001', enter_time: '2026-01-15', finish_time: '2026-01-15', block_reason: '', note: '客戶需求明確' }, { case_id: 'CASE-2026001', stage: '2. 資格快篩', person_id: 'P001', enter_time: '2026-01-16', finish_time: '2026-01-28', block_reason: '', note: '符合資格' }, { case_id: 'CASE-2026001', stage: '3. 文件收集', person_id: 'P003', enter_time: '2026-02-01', finish_time: '', block_reason: '缺身分證', note: '等待客戶補件' } ];
+        const commCalcs = [ { case_id: 'CASE-2026001', rule_id: 'R2025A', base_amount: 50000000, total_comm: 2500000, calc_time: '2026-02-03', locked: false, note: '預估值' } ];
+        const payouts = [ { case_id: 'CASE-2026001', person_id: 'P002', role_type: 'Introducer', due_amount: 375000, paid_amount: 0, status: 'unpaid' }, { case_id: 'CASE-2026001', person_id: 'P001', role_type: 'Consultant', due_amount: 750000, paid_amount: 200000, status: 'partial' } ];
+
+        const db = {
+            leads: [ { id: 'L001', name: '張先生 (個人)', source: 'Line OA', time: '10m ago', status: 'new', note: '詢問青創貸款資格' }, { id: 'L002', name: '宏達電通', source: '官網表單', time: '2h ago', status: 'working', note: '工廠擴建需求 3000萬' }, { id: 'L003', name: '王大明 (會計師介紹)', source: '轉介', time: '1d ago', status: 'qualified', note: '公司設立 + 貸款' } ],
+            get cases() { return cases.map(c => { const client = clients.find(cl => cl.id === c.client_id); return { id: c.id, name: client ? client.name : 'Unknown', type: c.type, stage: c.stage, amount: parseInt(c.req_amount).toLocaleString(), date: c.deal_date, raw: c }; }); },
+            get partners() { return persons.map(p => { const myParts = caseParticipants.filter(cp => cp.person_id === p.id); const myCaseIds = myParts.map(cp => cp.case_id); const myCases = cases.filter(c => myCaseIds.includes(c.id)); const totalContrib = myCases.reduce((sum, c) => sum + parseInt(c.approved_amount || 0), 0); const myPayouts = payouts.filter(py => py.person_id === p.id); const totalDue = myPayouts.reduce((sum, py) => sum + py.due_amount, 0); const totalPaid = myPayouts.reduce((sum, py) => sum + py.paid_amount, 0); return { id: p.id, name: p.name, role: p.role, bank: p.role === 'Partner' ? '合作夥伴' : '內部人員', branch: '-', rate: '-', types: [], stats: { cases: myCases.length, contrib: totalContrib, due: totalDue, paid: totalPaid, unpaid: totalDue - totalPaid } }; }); },
+            flows: { 'startup': ['1.初步諮詢', '2.資格快篩', '3.BP撰寫', '4.送件', '5.審查', '6.核准', '7.請款'], 'corp': ['1.初步諮詢', '2.資格快篩', '3.文件收集', '4.送件', '5.對保/審查', '6.核准撥款', '7.服務費請款'] }
+        };
+
+        function renderLeads() {
+            ['new', 'working', 'qualified'].forEach(s => { const col = document.querySelector(`div[ondrop*="'${s}'"] .drag-col`); if(col) col.innerHTML = ''; });
+            db.leads.forEach(l => {
+                const col = document.querySelector(`div[ondrop*="'${l.status}'"] .drag-col`); if(!col) return;
+                const color = {'Line OA':'green','官網表單':'blue','轉介':'purple'}[l.source] || 'gray';
+                const btn = l.status === 'qualified' ? `<button onclick="convertLead('${l.id}')" class="w-full mt-3 bg-green-500 text-white py-1 rounded text-sm hover:bg-green-600">轉為正式案件</button>` : '';
+                const card = document.createElement('div'); card.id = `card-${l.id}`; card.draggable = true; card.ondragstart = (e) => drag(e, l.id); card.className = "bg-white p-4 rounded-lg shadow-sm border hover:shadow-md cursor-grab active:cursor-grabbing group relative";
+                card.innerHTML = `<div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex gap-1"><button onclick="editLead('${l.id}')" class="w-6 h-6 rounded bg-gray-100 text-gray-500"><i class="fa-solid fa-pen"></i></button><button onclick="deleteLead('${l.id}')" class="w-6 h-6 rounded bg-red-100 text-red-500"><i class="fa-solid fa-trash"></i></button></div><div class="flex justify-between mb-2"><span class="bg-${color}-100 text-${color}-800 text-xs px-2 py-0.5 rounded">${l.source}</span><span class="text-xs text-gray-400">${l.time}</span></div><h4 class="font-bold text-slate-800">${l.name}</h4><div class="text-sm text-gray-500 mt-1">${l.note}</div>${btn}`;
+                col.appendChild(card);
+            });
+        }
+        function renderPipeline(flowType = 'corp') {
+            const btnCorp = document.getElementById('btn-flow-corp'); const btnStartup = document.getElementById('btn-flow-startup');
+            if(flowType === 'corp') { btnCorp.className = 'px-4 py-2 bg-white rounded-lg shadow-sm border border-psf-500 text-psf-600 font-bold transition'; btnStartup.className = 'px-4 py-2 bg-white rounded-lg shadow-sm border border-transparent text-gray-500 hover:text-gray-700 transition'; }
+            else { btnStartup.className = 'px-4 py-2 bg-white rounded-lg shadow-sm border border-psf-500 text-psf-600 font-bold transition'; btnCorp.className = 'px-4 py-2 bg-white rounded-lg shadow-sm border border-transparent text-gray-500 hover:text-gray-700 transition'; }
+            const board = document.getElementById('kanban-board'); board.innerHTML = '';
+            db.flows[flowType].forEach((stage, idx) => {
+                const col = document.createElement('div'); col.className = 'w-72 flex-shrink-0 flex flex-col h-full rounded-xl bg-gray-200 bg-opacity-70 p-2';
+                col.innerHTML = `<div class="flex justify-between items-center mb-3 px-2 mt-1"><span class="font-bold text-slate-700 text-sm">${stage}</span><span class="bg-white text-gray-500 text-xs px-2 py-0.5 rounded-full shadow-sm count-${idx}">0</span></div><div class="flex-1 space-y-3 overflow-y-auto min-h-[100px] pipeline-col" ondrop="drop(event, ${idx})" ondragover="allowDrop(event)"></div>`;
+                board.appendChild(col);
+            });
+            db.cases.filter(c => c.type === flowType).forEach(c => {
+                const col = document.querySelectorAll('.pipeline-col')[c.stage];
+                if(col) {
+                    const card = document.createElement('div'); card.id = `case-${c.id}`; card.draggable = true; card.ondragstart = (e) => drag(e, c.id); card.onclick = () => drillDownCase(c.name);
+                    const borderClass = c.type === 'corp' ? 'border-indigo-500' : 'border-psf-500'; const badgeClass = c.type === 'corp' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700';
+                    card.className = `bg-white p-4 rounded-lg shadow-sm border-l-4 ${borderClass} hover:shadow-md cursor-pointer transition transform hover:-translate-y-1`;
+                    card.innerHTML = `<div class="flex justify-between mb-2"><span class="text-xs ${badgeClass} px-2 py-0.5 rounded font-bold">${c.type==='corp'?'企業':'青創'}</span><span class="text-xs text-gray-400">${c.date || '2d ago'}</span></div><h4 class="font-bold text-slate-800">${c.name}</h4><div class="text-sm text-gray-500 mt-1">NT$ ${c.amount}</div>`;
+                    col.appendChild(card);
+                }
+            });
+            db.flows[flowType].forEach((_, idx) => { const count = document.querySelectorAll('.pipeline-col')[idx].children.length; const counter = document.querySelector(`.count-${idx}`); if(counter) counter.innerText = count; });
+        }
+        function renderPartners() {
+            const grid = document.getElementById('partners-grid'); grid.innerHTML = '';
+            db.partners.forEach(p => {
+                grid.innerHTML += `<div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition"><div class="flex items-center gap-4 mb-4"><div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-xl font-bold"><i class="fa-solid fa-user"></i></div><div><h3 class="font-bold text-lg">${p.name} <span class="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500">${p.role}</span></h3><div class="text-sm text-gray-500">${p.bank}</div></div></div><div class="space-y-3 text-sm text-gray-600 border-t pt-4"><div class="flex justify-between"><span>參與案件</span><span class="font-bold">${p.stats.cases} 件</span></div><div class="flex justify-between"><span>累積貢獻</span><span class="font-bold">NT$ ${Math.round(p.stats.contrib/10000)}萬</span></div><div class="flex justify-between text-green-600"><span>已撥分潤</span><span class="font-bold">NT$ ${p.stats.paid.toLocaleString()}</span></div><div class="flex justify-between text-red-500"><span>待撥分潤</span><span class="font-bold">NT$ ${p.stats.unpaid.toLocaleString()}</span></div></div><button class="w-full mt-4 border border-psf-500 text-psf-500 py-2 rounded hover:bg-psf-50" onclick="alert('夥伴詳細帳戶：${p.name}\\n本月績效...')">查看詳細帳戶</button></div>`;
+            });
+        }
+        function renderDashboardCharts() {
+            const activeCases = db.cases; const totalCases = activeCases.length;
+            const totalApproved = activeCases.reduce((sum, c) => { const amt = c.raw && c.raw.approved_amount ? parseInt(c.raw.approved_amount) : 0; return sum + amt; }, 0);
+            const totalComm = typeof commCalcs !== 'undefined' ? commCalcs.reduce((sum, cc) => sum + cc.total_comm, 0) : 0;
+            const totalPaid = typeof payouts !== 'undefined' ? payouts.reduce((sum, p) => sum + p.paid_amount, 0) : 0;
+            const totalUnpaid = typeof payouts !== 'undefined' ? payouts.reduce((sum, p) => sum + (p.due_amount - p.paid_amount), 0) : 0;
+            document.getElementById('dash-kpi-1').innerText = `NT$ ${Math.round(totalApproved/10000)}萬`; document.getElementById('dash-kpi-2').innerText = `NT$ ${Math.round(totalComm/10000)}萬`; document.getElementById('dash-kpi-3').innerText = `NT$ ${Math.round(totalPaid/10000)}萬`; document.getElementById('dash-kpi-4').innerText = `NT$ ${Math.round(totalUnpaid/10000)}萬`;
+            
+            const roleShare = {}; if(typeof payouts !== 'undefined') { payouts.forEach(p => { roleShare[p.role_type] = (roleShare[p.role_type] || 0) + p.due_amount; }); }
+            if(charts['revenue']) charts['revenue'].destroy();
+            const ctx1 = document.getElementById('chart-revenue').getContext('2d'); charts['revenue'] = new Chart(ctx1, { type: 'pie', data: { labels: Object.keys(roleShare), datasets: [{ label: '分潤佔比', data: Object.values(roleShare), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }] }, options: { maintainAspectRatio: false } });
+            
+            const types = {}; activeCases.forEach(c => { types[c.type] = (types[c.type] || 0) + 1; });
+            if(charts['source']) charts['source'].destroy();
+            const ctx2 = document.getElementById('chart-source').getContext('2d'); charts['source'] = new Chart(ctx2, { type: 'doughnut', data: { labels: Object.keys(types).map(t => t==='corp'?'企業融資':'青創貸款'), datasets: [{ data: Object.values(types), backgroundColor: ['#6366f1', '#ec4899'] }] }, options: { maintainAspectRatio: false } });
+            
+            const listContainer = document.getElementById('dash-list-container'); listContainer.innerHTML = '';
+            if(typeof caseLogs !== 'undefined') { caseLogs.slice(0, 3).forEach(l => { const c = cases.find(x => x.id === l.case_id); const p = persons.find(x => x.id === l.person_id); listContainer.innerHTML += `<div class="flex items-center gap-3 p-3 bg-gray-50 border-l-4 border-gray-500 rounded"><div class="text-center w-12"><div class="text-xs text-gray-500">LOG</div><div class="font-bold text-lg"><i class="fa-solid fa-history"></i></div></div><div><div class="font-bold text-slate-800">${c ? clients.find(cl=>cl.id===c.client_id).name : 'Unknown'} - ${l.stage}</div><div class="text-xs text-gray-500">${p ? p.name : ''}: ${l.note}</div></div></div>`; }); }
+        }
+
+        // --- ACTIONS ---
+        function createLead() { const name = prompt("請輸入客戶名稱："); if(name) { db.leads.push({ id: 'L'+Date.now(), name, source:'手動新增', time:'Now', status:'new', note:'新線索' }); renderLeads(); } }
+        function deleteLead(id) { if(confirm('確定刪除？')) { db.leads = db.leads.filter(l => l.id !== id); renderLeads(); } }
+        function editLead(id) { const l = db.leads.find(x => x.id === id); const newName = prompt("修改客戶名稱：", l.name); if(newName) { l.name = newName; renderLeads(); } }
+        function convertLead(id) { const l = db.leads.find(x => x.id === id); if(confirm(`將 [${l.name}] 轉為正式案件？\n(進入資格審核流程)`)) { db.cases.push({ id: 'CASE-'+Date.now(), client_id: 'CL'+Date.now(), type: 'corp', req_amount:'評估中', approved_amount:'0', stage: 0, deal_date: 'Now', status:'active' }); db.leads = db.leads.filter(x => x.id !== id); renderLeads(); router('pipeline'); } }
+        
+        function router(view) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById('l2-menu').classList.add('hidden'); document.getElementById('back-btn').classList.add('hidden');
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => { el.classList.remove('bg-slate-800', 'border-psf-500', 'text-white'); el.classList.add('text-slate-300', 'border-transparent'); });
+            const nav = document.getElementById(`nav-${view}`); if(nav) { nav.classList.add('bg-slate-800', 'border-psf-500', 'text-white'); nav.classList.remove('text-slate-300', 'border-transparent'); }
+            const titles = { 'dashboard':'儀表板', 'leads':'線索池', 'pipeline':'案件總管', 'partners':'銀行窗口' };
+            document.getElementById('page-title').innerText = titles[view] || 'CRM';
+            if(view === 'leads') renderLeads(); if(view === 'pipeline') renderPipeline('corp'); if(view === 'partners') renderPartners(); if(view === 'dashboard') renderDashboardCharts();
+        }
+        
+        function drillDownCase(name) {
+            router('case-detail');
+            document.getElementById('l2-menu').classList.remove('hidden'); document.getElementById('back-btn').classList.remove('hidden');
+            document.getElementById('page-title').innerText = name; document.getElementById('detail-title').innerText = name;
+            document.getElementById('milestones-container').innerHTML = `<div class="min-w-[200px] bg-white border border-purple-200 p-4 rounded-lg shadow-sm"><div class="text-xs text-gray-400">2025/12</div><div class="font-bold">資本額變更</div></div>`;
+            document.getElementById('logs-container').innerHTML = `<div class="relative"><div class="absolute -left-[41px] bg-green-500 w-10 h-10 rounded-full border-4 border-white flex items-center justify-center text-white text-lg"><i class="fa-brands fa-line"></i></div><div class="bg-white p-4 rounded-lg border shadow-sm"><div class="flex justify-between mb-2"><span class="font-bold text-slate-800">LINE OA 對話摘要</span><span class="text-xs text-gray-400">今天 10:30</span></div><p class="text-gray-600 text-sm">客戶詢問進度。</p></div></div>`;
+        }
+
+        function openCaseTab(tab) {
+            document.getElementById('view-case-detail').classList.add('hidden'); document.getElementById('view-docs').classList.add('hidden'); document.getElementById('view-finance').classList.add('hidden'); document.getElementById('view-bank').classList.add('hidden');
+            const activeView = tab === 'overview' ? 'case-detail' : tab;
+            document.getElementById(`view-${activeView}`).classList.remove('hidden');
+            if(tab === 'finance') { const caseName = document.getElementById('l2-case-name').innerText; const c = db.cases.find(x => x.name === caseName); if(c) renderFinance(c); }
+            if(tab === 'bank') { document.getElementById('page-title').innerText = '送件評估'; }
+        }
+
+        function renderFinance(c) {
+            document.getElementById('finance-loan-amount').value = c.amount;
+            const parts = typeof caseParticipants !== 'undefined' ? caseParticipants.filter(p => p.case_id === c.id && ['Introducer', 'Partner'].includes(p.role_type)) : [];
+            let partnerHtml = '';
+            if(parts.length > 0) {
+                parts.forEach(p => { const person = persons.find(x => x.id === p.person_id); partnerHtml += `<div class="flex items-center justify-between p-3 bg-white rounded border border-red-200 mb-2"><div><div class="font-bold text-slate-700">分潤對象：${person ? person.name : p.person_id}</div><div class="text-xs text-gray-500">角色：${p.role_type}</div></div><div class="flex items-center gap-2"><input type="text" value="${p.rate}" class="w-12 text-center border rounded bg-gray-50"><span class="text-gray-500">%</span></div></div>`; });
+            } else { partnerHtml = `<div class="p-3 text-gray-400 bg-gray-50 rounded border border-dashed text-center">無分潤對象</div>`; }
+            const listEl = document.getElementById('finance-partner-list'); if(listEl) listEl.innerHTML = partnerHtml;
+        }
+
+        function goBack() { router('pipeline'); }
+        function allowDrop(ev) { ev.preventDefault(); }
+        function drag(ev, id) { ev.dataTransfer.setData("text", id); }
+        function dropLead(ev, status) { ev.preventDefault(); const id = ev.dataTransfer.getData("text"); const lead = db.leads.find(l => l.id === id); if(lead) { lead.status = status; renderLeads(); } }
+        function drop(ev, idx) { ev.preventDefault(); const id = ev.dataTransfer.getData("text"); const c = db.cases.find(x => x.id === id); if(c) { c.stage = idx; renderPipeline(c.type); } }
+
+        window.addEventListener('DOMContentLoaded', () => { router('dashboard'); });
+    </script>
+</body>
+</html>

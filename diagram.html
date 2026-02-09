@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'forest' });
+    </script>
+    <style>body { background: white; padding: 20px; font-family: sans-serif; }</style>
+</head>
+<body>
+    <h2 style="text-align: center;">朋睿 CRM V3.0 - 完整系統全覽圖 (Master Architecture)</h2>
+    <div class="mermaid" style="text-align: center;">
+    graph TD
+        subgraph Sources ["資料來源層 (Data Sources)"]
+            style Sources fill:#fff0f6,stroke:#eb2f96,stroke-width:2px
+            Web("🌐 官方網站")
+            Line("💬 官方 LINE")
+            Referral("🤝 合作夥伴引薦")
+        end
+
+        subgraph L1 ["L1: 案件受理層"]
+            style L1 fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
+            Leads("🎣 潛在線索池<br/>(綁定推薦人)")
+            FollowUp("📞 跟進紀錄<br/>(確認需求/狀態)")
+            Pipeline("📋 案件總管 (7階段SOP)<br/>1.諮詢...7.請款")
+        end
+
+        subgraph L2 ["L2: 案件執行層 (Case Execution)"]
+            style L2 fill:#f6ffed,stroke:#52c41a,stroke-width:2px
+            CaseOverview("👁️ 案件概況<br/>(全生命週期/里程碑)")
+            CaseDMS("📂 文件中心<br/>(缺件檢核/催件)")
+        end
+
+        subgraph L3 ["L3: 銀行媒合層 (Bank Matching)"]
+            style L3 fill:#fff7e6,stroke:#fa8c16,stroke-width:2px
+            BankEval("⚖️ 送件評估")
+            Partners("🏛️ 銀行合作夥伴庫<br/>(窗口管理/偏好)")
+        end
+        
+        subgraph Sys ["系統支援層 (System Support)"]
+            style Sys fill:#f9f0ff,stroke:#722ed1,stroke-width:2px,stroke-dasharray: 5 5
+            RBAC("🔐 權限管理 (RBAC)")
+            API("🔌 API 介接")
+        end
+
+        %% Connections
+        Web --> Leads
+        Line --> Leads
+        Referral --> Leads
+
+        Leads -->|"1. 開始跟進"| FollowUp
+        FollowUp -->|"2. 需求確認 (Qualified)"| Pipeline
+        
+        Pipeline -->|"3. 進入案件 (Drill-down)"| CaseOverview
+        
+        CaseOverview -->|"4. 收集資料"| CaseDMS
+        CaseDMS -->|"5. 資料備齊"| BankEval
+        
+        BankEval -->|"6. 匹配最適合銀行"| Partners
+        Partners -->|"7. 送件/對保"| Commission("💰 佣金結算<br/>(分潤試算)")
+
+        %% Styling
+        classDef main fill:#fff,stroke:#333,stroke-width:1px;
+        class Web,Line,Referral,Leads,FollowUp,Pipeline,CaseOverview,CaseDMS,BankEval,Partners,Commission,RBAC,API main;
+        linkStyle 9 stroke:red,stroke-width:2px; 
+    </div>
+</body>
+</html>
