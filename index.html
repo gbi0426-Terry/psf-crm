@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>朋睿國際 CRM V4.4 (Lead Status)</title>
+    <title>朋睿國際 CRM V4.5 (RWD Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,7 +16,7 @@
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
             <h1 class="text-2xl font-bold text-slate-800 mb-2">朋睿國際 CRM</h1>
-            <p class="text-sm text-gray-500 mb-6">V4.4 Lead Status</p>
+            <p class="text-sm text-gray-500 mb-6">V4.5 RWD</p>
             <div class="space-y-4 text-left">
                 <div><label class="block text-xs font-bold text-gray-700 mb-1">帳號</label><input type="text" id="login-user" class="w-full border rounded p-2" placeholder="admin / terry / client"></div>
                 <div><label class="block text-xs font-bold text-gray-700 mb-1">密碼</label><input type="password" id="login-pass" class="w-full border rounded p-2" placeholder="••••"></div>
@@ -35,8 +35,8 @@
     </div>
     
     <!-- Lead Detail Modal -->
-    <div id="lead-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl w-[600px] overflow-hidden">
+    <div id="lead-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
             <div class="bg-psf-600 p-4 text-white font-bold text-lg flex justify-between"><span>線索詳情</span><button onclick="closeLeadModal()" class="text-white hover:text-gray-200"><i class="fa-solid fa-times"></i></button></div>
             <div class="p-6 space-y-4">
                 <input type="hidden" id="lead-id">
@@ -59,30 +59,37 @@
         </div>
     </div>
 
-    <div id="app-container" class="flex-1 flex overflow-hidden hidden">
-        <aside id="sidebar" class="w-64 bg-white text-slate-600 flex flex-col border-r z-30 flex-shrink-0 transition-all duration-300"></aside>
-        <main class="flex-1 flex flex-col relative overflow-hidden">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-8 z-20">
+    <!-- App Container (RWD) -->
+    <div id="app-container" class="flex-1 flex overflow-hidden hidden relative">
+        <!-- Mobile Overlay -->
+        <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden transition-opacity"></div>
+        
+        <aside id="sidebar" class="absolute md:relative w-64 bg-white text-slate-600 flex flex-col border-r z-30 h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+            <!-- Sidebar content injected -->
+        </aside>
+        <main class="flex-1 flex flex-col relative overflow-hidden w-full">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-8 z-20">
                 <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-psf-600"><i class="fa-solid fa-bars text-xl"></i></button>
                     <button id="back-btn" onclick="goBack()" class="hidden text-slate-400 hover:text-slate-800"><i class="fa-solid fa-arrow-left text-xl"></i></button>
-                    <h2 id="page-title" class="text-xl font-bold text-slate-800">總覽</h2>
+                    <h2 id="page-title" class="text-lg md:text-xl font-bold text-slate-800 truncate">總覽</h2>
                 </div>
-                <div class="flex items-center gap-4"><span id="user-info" class="text-sm text-slate-500 bg-gray-100 px-3 py-1 rounded-full">訪客</span><button onclick="logout()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-sign-out-alt"></i></button></div>
+                <div class="flex items-center gap-4"><span id="user-info" class="text-sm text-slate-500 bg-gray-100 px-3 py-1 rounded-full hidden md:inline">訪客</span><button onclick="logout()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-sign-out-alt"></i></button></div>
             </header>
-            <div id="main-view" class="flex-1 overflow-auto p-8 relative">
+            <div id="main-view" class="flex-1 overflow-auto p-4 md:p-8 relative">
                 <!-- CONSULTANT VIEWS -->
                 <div id="view-dashboard" class="view-section page-enter hidden h-full flex flex-col space-y-6">
-                    <div class="grid grid-cols-4 gap-6">
-                        <div onclick="router('pipeline')" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft hover:shadow-md transition cursor-pointer"><div class="flex justify-between items-start mb-4"><div class="card-icon bg-green-50 text-green-600"><i class="fa-solid fa-sack-dollar"></i></div><span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">+12.5%</span></div><div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">總核准金額</div><div class="text-2xl font-bold text-slate-800" id="dash-kpi-1">NT$ 0</div></div>
-                        <div onclick="router('pipeline')" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft hover:shadow-md transition cursor-pointer"><div class="flex justify-between items-start mb-4"><div class="card-icon bg-blue-50 text-blue-600"><i class="fa-solid fa-chart-line"></i></div><span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">+8.2%</span></div><div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">總佣金金額</div><div class="text-2xl font-bold text-slate-800" id="dash-kpi-2">NT$ 0</div></div>
-                        <div onclick="router('pipeline')" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft hover:shadow-md transition cursor-pointer"><div class="flex justify-between items-start mb-4"><div class="card-icon bg-purple-50 text-purple-600"><i class="fa-solid fa-briefcase"></i></div><span class="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded">Paid</span></div><div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">已撥款金額</div><div class="text-2xl font-bold text-slate-800" id="dash-kpi-3">NT$ 0</div></div>
-                        <div onclick="router('leads')" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft hover:shadow-md transition cursor-pointer"><div class="flex justify-between items-start mb-4"><div class="card-icon bg-red-50 text-red-600"><i class="fa-solid fa-bell"></i></div><span class="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded">Unpaid</span></div><div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">未撥款金額</div><div class="text-2xl font-bold text-slate-800" id="dash-kpi-4">NT$ 0</div></div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                        <div onclick="router('pipeline')" class="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-soft hover:shadow-md transition cursor-pointer"><div class="flex justify-between items-start mb-4"><div class="card-icon bg-green-50 text-green-600"><i class="fa-solid fa-sack-dollar"></i></div><span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">+12.5%</span></div><div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">總核准金額</div><div class="text-xl md:text-2xl font-bold text-slate-800" id="dash-kpi-1">NT$ 0</div></div>
+                        <div onclick="router('pipeline')" class="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-soft hover:shadow-md transition cursor-pointer"><div class="flex justify-between items-start mb-4"><div class="card-icon bg-blue-50 text-blue-600"><i class="fa-solid fa-chart-line"></i></div><span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">+8.2%</span></div><div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">總佣金金額</div><div class="text-xl md:text-2xl font-bold text-slate-800" id="dash-kpi-2">NT$ 0</div></div>
+                        <div onclick="router('pipeline')" class="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-soft hover:shadow-md transition cursor-pointer"><div class="flex justify-between items-start mb-4"><div class="card-icon bg-purple-50 text-purple-600"><i class="fa-solid fa-briefcase"></i></div><span class="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded">Paid</span></div><div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">已撥款金額</div><div class="text-xl md:text-2xl font-bold text-slate-800" id="dash-kpi-3">NT$ 0</div></div>
+                        <div onclick="router('leads')" class="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-soft hover:shadow-md transition cursor-pointer"><div class="flex justify-between items-start mb-4"><div class="card-icon bg-red-50 text-red-600"><i class="fa-solid fa-bell"></i></div><span class="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded">Unpaid</span></div><div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">未撥款金額</div><div class="text-xl md:text-2xl font-bold text-slate-800" id="dash-kpi-4">NT$ 0</div></div>
                     </div>
-                    <div class="grid grid-cols-3 gap-6 flex-1 min-h-0">
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft col-span-2 flex flex-col"><h3 class="font-bold text-slate-700 mb-4">角色分潤統計</h3><div class="flex-1 relative"><canvas id="chart-revenue"></canvas></div></div>
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft flex flex-col"><h3 class="font-bold text-slate-700 mb-4">案件類型占比</h3><div class="flex-1 relative"><canvas id="chart-source"></canvas></div></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 min-h-0">
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft md:col-span-2 flex flex-col"><h3 class="font-bold text-slate-700 mb-4">角色分潤統計</h3><div class="flex-1 relative h-64 md:h-auto"><canvas id="chart-revenue"></canvas></div></div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft flex flex-col"><h3 class="font-bold text-slate-700 mb-4">案件類型占比</h3><div class="flex-1 relative h-64 md:h-auto"><canvas id="chart-source"></canvas></div></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-6 h-64">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-64">
                         <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft overflow-hidden flex flex-col"><h3 class="font-bold text-slate-700 mb-4">🏆 最新案件歷程</h3><div class="space-y-3 overflow-y-auto" id="dash-list-container"></div></div>
                         <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-soft overflow-hidden flex flex-col"><h3 class="font-bold text-slate-700 mb-4">📅 待辦事項</h3><div class="space-y-3 overflow-y-auto"><div class="flex items-center gap-3 p-3 bg-red-50 border-l-4 border-red-500 rounded"><div class="text-center w-12"><div class="text-xs text-red-500">FEB</div><div class="font-bold text-lg">05</div></div><div><div class="font-bold text-slate-800">補件截止日 - 鴻海案</div><div class="text-xs text-gray-500">差負責人身分證</div></div></div></div></div>
                     </div>
@@ -96,11 +103,11 @@
                     </div>
                 </div>
                 <div id="view-pipeline" class="view-section page-enter hidden h-full flex flex-col"><div class="flex gap-4 mb-6"><button id="btn-flow-corp" onclick="renderPipeline('corp')" class="px-4 py-2 bg-white rounded-xl shadow-sm border border-psf-500 text-psf-600 font-bold transition">企業融資流程</button><button id="btn-flow-startup" onclick="renderPipeline('startup')" class="px-4 py-2 bg-white rounded-xl shadow-sm border border-transparent text-gray-500 hover:text-gray-700 transition">青創貸款流程</button></div><div class="flex-1 overflow-x-auto"><div class="flex gap-4 h-full min-w-[2000px] pb-4" id="kanban-board"></div></div></div>
-                <div id="view-partners" class="view-section page-enter hidden h-full flex flex-col"><div class="flex gap-4 mb-6"><input type="text" placeholder="搜尋銀行..." class="flex-1 border p-2 rounded-xl shadow-sm"><button class="bg-white border px-4 py-2 rounded-xl shadow-sm text-gray-600">篩選</button></div><div class="grid grid-cols-3 gap-6 overflow-y-auto" id="partners-grid"></div></div>
-                <div id="view-case-detail" class="view-section page-enter hidden h-full flex flex-col"><div class="bg-white p-6 rounded-2xl shadow-soft mb-6 flex justify-between items-start border border-gray-100"><div><div class="flex items-center gap-3 mb-2"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-sm font-bold" id="detail-type">企業融資</span><h1 class="text-3xl font-bold text-slate-800" id="detail-title">鴻海精密</h1></div><div class="flex gap-6 text-sm text-gray-500" id="detail-info"></div></div><div class="text-right flex flex-col items-end gap-2"><button onclick="alert('編輯資料')" class="text-gray-400 hover:text-gray-600 px-3 py-1 border rounded text-sm"><i class="fa-solid fa-pen"></i> 編輯資料</button></div></div><div class="flex-1 bg-white rounded-2xl shadow-soft overflow-hidden flex border border-gray-100"><div class="flex-1 p-8 overflow-y-auto" id="l2-content"><div class="mb-8"><h3 class="text-xl font-bold mb-4">企業里程碑</h3><div class="flex gap-4 overflow-x-auto pb-4" id="milestones-container"></div></div><h3 class="text-xl font-bold mb-4">互動紀錄</h3><div class="relative pl-8 border-l-2 border-gray-200 space-y-8" id="logs-container"></div></div></div></div>
-                <div id="view-docs" class="view-section page-enter hidden h-full bg-white rounded-2xl shadow-soft p-6 flex flex-col border border-gray-100"><div class="flex justify-between items-center mb-6 border-b pb-4"><h3 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-folder-open text-psf-600 mr-2"></i> 文件管理中心</h3><div class="flex items-center gap-3"><div class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold border border-red-200">缺件禁止送件</div><button class="bg-psf-600 text-white px-4 py-2 rounded-xl shadow hover:bg-psf-800" onclick="alert('Line 催件')"><i class="fa-brands fa-line"></i> 一鍵催件</button></div></div><div class="flex-1 overflow-y-auto space-y-8" id="docs-content"></div></div>
-                <div id="view-bank" class="view-section page-enter hidden h-full bg-white rounded-2xl shadow-soft p-6 border border-gray-100"><h3 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-4"><i class="fa-solid fa-magnifying-glass-dollar text-psf-600 mr-2"></i> 送件評估</h3><div class="grid grid-cols-2 gap-8"><div class="space-y-4"><h4 class="font-bold text-lg text-slate-700">案件條件分析</h4><div class="bg-gray-50 p-4 rounded-lg space-y-2"><div class="flex justify-between"><span>產業別</span><span class="font-bold">製造業 (3C)</span></div><div class="flex justify-between"><span>申請金額</span><span class="font-bold">5,000 萬</span></div><div class="flex justify-between"><span>401報表</span><span class="text-green-600">優 (成長12%)</span></div></div></div><div class="space-y-4"><h4 class="font-bold text-lg text-slate-700">推薦銀行</h4><div class="space-y-3"><div class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100" onclick="alert('已選擇：玉山')"><div class="flex items-center gap-3"><span class="bg-green-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span><div><div class="font-bold text-slate-800">玉山銀行</div><div class="text-xs text-gray-500">核貸率 85%</div></div></div><button class="text-xs bg-white border border-green-500 text-green-600 px-2 py-1 rounded">選擇</button></div></div></div></div></div>
-                <div id="view-finance" class="view-section page-enter hidden h-full bg-white rounded-2xl shadow-soft p-6 border border-gray-100"><h3 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-4"><i class="fa-solid fa-calculator text-psf-600 mr-2"></i> 佣金試算表</h3><div class="grid grid-cols-2 gap-8"><div class="space-y-6"><h4 class="font-bold text-lg text-slate-700 border-l-4 border-green-500 pl-3">收入預估</h4><div class="bg-green-50 p-6 rounded-xl space-y-4"><div><label class="block text-sm font-bold text-gray-700">核貸金額</label><input type="text" id="finance-loan-amount" value="50,000,000" class="w-full border rounded p-2 text-right"></div><div><label class="block text-sm font-bold text-gray-700">總營收 (5%)</label><div class="w-full bg-white border rounded p-2 text-right">$ 2,500,000</div></div></div></div><div class="space-y-6"><h4 class="font-bold text-lg text-slate-700 border-l-4 border-red-500 pl-3">分潤支出</h4><div class="bg-red-50 p-6 rounded-xl space-y-4" id="finance-partner-section"></div></div></div><div class="mt-8 pt-6 border-t flex justify-end"><div class="text-3xl font-bold text-psf-600">淨利 $ 1,375,000</div></div></div>
+                <div id="view-partners" class="view-section page-enter hidden h-full flex flex-col"><div class="flex gap-4 mb-6"><input type="text" placeholder="搜尋銀行..." class="flex-1 border p-2 rounded-xl shadow-sm"><button class="bg-white border px-4 py-2 rounded-xl shadow-sm text-gray-600">篩選</button></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-y-auto" id="partners-grid"></div></div>
+                <div id="view-case-detail" class="view-section page-enter hidden h-full flex flex-col"><div class="bg-white p-6 rounded-2xl shadow-soft mb-6 flex justify-between items-start border border-gray-100"><div><div class="flex items-center gap-3 mb-2"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-sm font-bold" id="detail-type">企業融資</span><h1 class="text-xl md:text-3xl font-bold text-slate-800" id="detail-title">鴻海精密</h1></div><div class="flex gap-6 text-sm text-gray-500" id="detail-info"></div></div><div class="text-right flex flex-col items-end gap-2"><button onclick="alert('編輯資料')" class="text-gray-400 hover:text-gray-600 px-3 py-1 border rounded text-sm"><i class="fa-solid fa-pen"></i> 編輯資料</button></div></div><div class="flex-1 bg-white rounded-2xl shadow-soft overflow-hidden flex border border-gray-100"><div class="flex-1 p-8 overflow-y-auto" id="l2-content"><div class="mb-8"><h3 class="text-xl font-bold mb-4">企業里程碑</h3><div class="flex gap-4 overflow-x-auto pb-4" id="milestones-container"></div></div><h3 class="text-xl font-bold mb-4">互動紀錄</h3><div class="relative pl-8 border-l-2 border-gray-200 space-y-8" id="logs-container"></div></div></div></div>
+                <div id="view-docs" class="view-section page-enter hidden h-full bg-white rounded-2xl shadow-soft p-6 flex flex-col border border-gray-100"><div class="flex justify-between items-center mb-6 border-b pb-4"><h3 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-folder-open text-psf-600 mr-2"></i> 文件管理中心</h3><div class="flex items-center gap-3"><div class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold border border-red-200 text-xs md:text-base">缺件禁止送件</div><button class="bg-psf-600 text-white px-4 py-2 rounded-xl shadow hover:bg-psf-800" onclick="alert('Line 催件')"><i class="fa-brands fa-line"></i> 一鍵催件</button></div></div><div class="flex-1 overflow-y-auto space-y-8" id="docs-content"></div></div>
+                <div id="view-bank" class="view-section page-enter hidden h-full bg-white rounded-2xl shadow-soft p-6 border border-gray-100"><h3 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-4"><i class="fa-solid fa-magnifying-glass-dollar text-psf-600 mr-2"></i> 送件評估</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="space-y-4"><h4 class="font-bold text-lg text-slate-700">案件條件分析</h4><div class="bg-gray-50 p-4 rounded-lg space-y-2"><div class="flex justify-between"><span>產業別</span><span class="font-bold">製造業 (3C)</span></div><div class="flex justify-between"><span>申請金額</span><span class="font-bold">5,000 萬</span></div><div class="flex justify-between"><span>401報表</span><span class="text-green-600">優 (成長12%)</span></div></div></div><div class="space-y-4"><h4 class="font-bold text-lg text-slate-700">推薦銀行</h4><div class="space-y-3"><div class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100" onclick="alert('已選擇：玉山')"><div class="flex items-center gap-3"><span class="bg-green-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span><div><div class="font-bold text-slate-800">玉山銀行</div><div class="text-xs text-gray-500">核貸率 85%</div></div></div><button class="text-xs bg-white border border-green-500 text-green-600 px-2 py-1 rounded">選擇</button></div></div></div></div></div>
+                <div id="view-finance" class="view-section page-enter hidden h-full bg-white rounded-2xl shadow-soft p-6 border border-gray-100"><h3 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-4"><i class="fa-solid fa-calculator text-psf-600 mr-2"></i> 佣金試算表</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="space-y-6"><h4 class="font-bold text-lg text-slate-700 border-l-4 border-green-500 pl-3">收入預估</h4><div class="bg-green-50 p-6 rounded-xl space-y-4"><div><label class="block text-sm font-bold text-gray-700">核貸金額</label><input type="text" id="finance-loan-amount" value="50,000,000" class="w-full border rounded p-2 text-right"></div><div><label class="block text-sm font-bold text-gray-700">總營收 (5%)</label><div class="w-full bg-white border rounded p-2 text-right">$ 2,500,000</div></div></div></div><div class="space-y-6"><h4 class="font-bold text-lg text-slate-700 border-l-4 border-red-500 pl-3">分潤支出</h4><div class="bg-red-50 p-6 rounded-xl space-y-4" id="finance-partner-section"></div></div></div><div class="mt-8 pt-6 border-t flex justify-end"><div class="text-3xl font-bold text-psf-600">淨利 $ 1,375,000</div></div></div>
                 <div id="view-client" class="view-section page-enter hidden h-full"></div>
                 <div id="view-partner-portal" class="view-section page-enter hidden h-full"></div>
                 <div id="view-admin" class="view-section page-enter hidden h-full"></div>
@@ -135,9 +142,11 @@
             else if(role === 'admin') html += `<a class="flex items-center px-4 py-3 text-slate-500 hover:bg-gray-100 rounded-xl"><i class="fa-solid fa-users-gear w-6"></i> 系統管理</a>`;
             html += `</nav>`; sb.innerHTML = html;
         }
+        function toggleSidebar() { const sb = document.getElementById('sidebar'); const ol = document.getElementById('mobile-overlay'); if(sb.classList.contains('-translate-x-full')) { sb.classList.remove('-translate-x-full'); ol.classList.remove('hidden'); } else { sb.classList.add('-translate-x-full'); ol.classList.add('hidden'); } }
         function router(view) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden')); document.getElementById('l2-menu') ? document.getElementById('l2-menu').classList.add('hidden') : null; document.getElementById('back-btn').classList.add('hidden');
             const el = document.getElementById(`view-${view}`); if(el) el.classList.remove('hidden');
+            if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('mobile-overlay').classList.add('hidden'); }
             document.querySelectorAll('.nav-item').forEach(el => { el.classList.remove('bg-psf-50', 'text-psf-600'); el.classList.add('text-slate-500'); }); const nav = document.getElementById(`nav-${view}`); if(nav) { nav.classList.add('bg-psf-50', 'text-psf-600'); nav.classList.remove('text-slate-500'); }
             const titles = { 'dashboard':'總覽', 'leads':'線索管理', 'pipeline':'案件管理', 'partners':'銀行資料庫' }; document.getElementById('page-title').innerText = titles[view] || 'CRM';
             if(view==='leads') renderLeads(); if(view==='pipeline') renderPipeline('corp'); if(view==='partners') renderPartners(); if(view==='dashboard') renderDashboardCharts();
@@ -146,47 +155,17 @@
             ['new', 'working', 'qualified'].forEach(s => { const col = document.getElementById(`col-lead-${s}`); if(col) col.innerHTML = ''; });
             db.leads.forEach(l => {
                 const col = document.getElementById(`col-lead-${l.status}`); if(!col) return;
-                const btn = l.status==='qualified' ? `<button onclick="convertLead('${l.id}')" class="w-full mt-3 bg-psf-600 text-white py-1 rounded text-sm hover:bg-psf-700">轉為正式案件</button>`:'';
-                const card = document.createElement('div'); card.id=`card-${l.id}`; card.draggable=true; card.ondragstart=(e)=>drag(e,l.id); card.className = "bg-white p-4 rounded-xl shadow-soft border border-gray-100 mb-3 cursor-grab hover:shadow-md transition";
-                card.onclick=()=>openLeadDetail(l.id);
+                const btn = l.status==='qualified' ? `<button onclick="event.stopPropagation(); convertLead('${l.id}')" class="w-full mt-3 bg-psf-600 text-white py-1 rounded text-sm hover:bg-psf-700">轉為正式案件</button>`:'';
+                const card = document.createElement('div'); card.id=`card-${l.id}`; card.draggable=true; card.ondragstart=(e)=>drag(e,l.id); card.onclick=()=>openLeadDetail(l.id); card.className = "bg-white p-4 rounded-xl shadow-soft border border-gray-100 mb-3 cursor-pointer hover:shadow-md transition";
                 card.innerHTML = `<div class="flex justify-between mb-2"><span class="bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded font-bold">${l.source}</span><span class="text-xs text-gray-400">${l.time}</span></div><h4 class="font-bold text-slate-800">${l.name}</h4><div class="text-sm text-gray-500 mt-1">${l.note}</div>${btn}`;
                 col.appendChild(card);
             });
         }
-        function openLeadDetail(id) {
-            const l = db.leads.find(x => x.id === id);
-            document.getElementById('lead-id').value = id;
-            document.getElementById('lead-name').value = l.name;
-            document.getElementById('lead-source').value = l.source;
-            document.getElementById('lead-note').value = l.note;
-            document.getElementById('lead-status').value = l.status;
-            const history = document.getElementById('lead-history'); history.innerHTML = '';
-            if(l.history) l.history.forEach(h => history.innerHTML += `<div class="border-l-2 border-gray-300 pl-2 mb-2"><div class="text-xs text-gray-400">${h.date} - ${h.user}</div><div class="text-slate-700">${h.note}</div></div>`);
-            else history.innerHTML = '<div class="text-gray-400 text-center py-4">暫無紀錄</div>';
-            document.getElementById('lead-modal').classList.remove('hidden');
-        }
+        function openLeadDetail(id) { const l = db.leads.find(x => x.id === id); document.getElementById('lead-id').value=id; document.getElementById('lead-name').value=l.name; document.getElementById('lead-source').value=l.source; document.getElementById('lead-note').value=l.note; document.getElementById('lead-status').value=l.status; const h = document.getElementById('lead-history'); h.innerHTML=''; if(l.history) l.history.forEach(x => h.innerHTML += `<div class="border-l-2 border-gray-300 pl-2 mb-2"><div class="text-xs text-gray-400">${x.date}</div><div>${x.note}</div></div>`); document.getElementById('lead-modal').classList.remove('hidden'); }
         function closeLeadModal() { document.getElementById('lead-modal').classList.add('hidden'); }
-        function saveLeadDetail() {
-            const id = document.getElementById('lead-id').value;
-            const l = db.leads.find(x => x.id === id);
-            if(l) { 
-                l.name = document.getElementById('lead-name').value; 
-                l.source = document.getElementById('lead-source').value; 
-                l.note = document.getElementById('lead-note').value; 
-                l.status = document.getElementById('lead-status').value;
-                renderLeads(); closeLeadModal(); 
-            }
-        }
-        function deleteLeadFromModal() {
-            const id = document.getElementById('lead-id').value;
-            if(confirm('確定刪除此線索？')) { db.leads = db.leads.filter(l => l.id !== id); renderLeads(); closeLeadModal(); }
-        }
-        function addLeadLog() {
-            const id = document.getElementById('lead-id').value; const note = document.getElementById('lead-new-log').value;
-            if(!note) return;
-            const l = db.leads.find(x => x.id === id);
-            if(l) { if(!l.history) l.history=[]; l.history.unshift({date: new Date().toLocaleDateString(), user: 'Me', note}); openLeadDetail(id); document.getElementById('lead-new-log').value=''; }
-        }
+        function saveLeadDetail() { const id = document.getElementById('lead-id').value; const l = db.leads.find(x => x.id === id); if(l) { l.name=document.getElementById('lead-name').value; l.status=document.getElementById('lead-status').value; renderLeads(); closeLeadModal(); } }
+        function deleteLeadFromModal() { const id = document.getElementById('lead-id').value; db.leads=db.leads.filter(l=>l.id!==id); renderLeads(); closeLeadModal(); }
+        function addLeadLog() { const id=document.getElementById('lead-id').value; const note=document.getElementById('lead-new-log').value; if(note) { const l=db.leads.find(x=>x.id===id); if(!l.history) l.history=[]; l.history.unshift({date:'Now', note}); openLeadDetail(id); } }
 
         function renderPipeline(type) { const btnCorp = document.getElementById('btn-flow-corp'); const btnStartup = document.getElementById('btn-flow-startup'); if(type === 'corp') { btnCorp.classList.add('border-psf-500','text-psf-600'); btnCorp.classList.remove('border-transparent','text-gray-500'); btnStartup.classList.remove('border-psf-500','text-psf-600'); btnStartup.classList.add('border-transparent','text-gray-500'); } else { btnStartup.classList.add('border-psf-500','text-psf-600'); btnStartup.classList.remove('border-transparent','text-gray-500'); btnCorp.classList.remove('border-psf-500','text-psf-600'); btnCorp.classList.add('border-transparent','text-gray-500'); } const board = document.getElementById('kanban-board'); board.innerHTML = ''; db.flows[type].forEach((stage, idx) => { const col = document.createElement('div'); col.className = "w-72 flex-shrink-0 flex flex-col h-full bg-slate-100 rounded-2xl p-3 border border-slate-200"; col.innerHTML = `<div class="font-bold text-slate-700 mb-3 px-2 text-sm">${stage}</div><div class="flex-1 space-y-3 pipeline-col overflow-y-auto" ondrop="drop(event, ${idx})" ondragover="allowDrop(event)"></div>`; board.appendChild(col); }); db.cases.forEach(c => { if(c.type !== type) return; const col = document.querySelectorAll('.pipeline-col')[c.stage]; if(col) { const card = document.createElement('div'); card.id=`case-${c.id}`; card.draggable=true; card.ondragstart=(e)=>drag(e,c.id); card.className="bg-white p-4 rounded-xl shadow-soft border-l-4 border-psf-500 cursor-pointer hover:shadow-md transition transform hover:-translate-y-1"; card.onclick = () => drillDownCase(c.client_id === 'CL001' ? '鴻海精密' : 'Case'); card.innerHTML = `<div class="flex justify-between mb-2"><span class="text-xs font-bold text-psf-600 bg-psf-50 px-2 py-0.5 rounded">企業</span><span class="text-xs text-gray-400">2d ago</span></div><h4 class="font-bold text-slate-800">${c.name || 'Unknown'}</h4><div class="text-sm text-gray-500 mt-1">NT$ ${c.req_amount}</div>`; col.appendChild(card); } }); }
         function renderPartners() { const grid = document.getElementById('partners-grid'); grid.innerHTML = ''; db.partners.forEach(p => { grid.innerHTML += `<div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 hover:shadow-md transition"><div class="flex items-center gap-4 mb-4"><div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl font-bold"><i class="fa-solid fa-building-columns"></i></div><div><h3 class="font-bold text-lg text-slate-800">${p.name} <span class="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500">${p.role}</span></h3><div class="text-sm text-gray-500">${p.bank}</div></div></div><div class="space-y-2 text-sm text-gray-600"><div class="flex justify-between"><span>核貸率</span><span class="font-bold text-green-600">${p.rate}</span></div></div><button class="w-full mt-4 border border-psf-500 text-psf-500 py-2 rounded-xl hover:bg-psf-50 transition" onclick="alert('詳細績效: ${p.name}')">查看詳情</button></div>`; }); }
@@ -212,6 +191,7 @@
 
         function createLead() { const name = prompt("請輸入客戶名稱："); if(name) { db.leads.push({ id: 'L'+Date.now(), name, source:'手動新增', time:'Now', status:'new', note:'新線索' }); renderLeads(); } }
         function deleteLead(id) { if(confirm('確定刪除？')) { db.leads = db.leads.filter(l => l.id !== id); renderLeads(); } }
+        function editLead(id) { alert('編輯線索'); }
         function convertLead(id) { const l = db.leads.find(x => x.id === id); if(confirm(`將 [${l.name}] 轉為正式案件？\n(進入資格審核流程)`)) { db.cases.push({ id: 'CASE-'+Date.now(), client_id: 'CL'+Date.now(), type: 'corp', req_amount:'評估中', approved_amount:'0', stage: 0, deal_date: 'Now', status:'active' }); db.leads = db.leads.filter(x => x.id !== id); renderLeads(); router('pipeline'); } }
         function goBack() { router('pipeline'); }
         function allowDrop(ev) { ev.preventDefault(); }
