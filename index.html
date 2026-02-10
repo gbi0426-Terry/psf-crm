@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>朋睿國際 CRM V4.4 (Fixed)</title>
+    <title>朋睿國際 CRM V5.2 (Final Prototype)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,7 +16,7 @@
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
             <h1 class="text-2xl font-bold text-slate-800 mb-2">朋睿國際 CRM</h1>
-            <p class="text-sm text-gray-500 mb-6">V4.4 Stable</p>
+            <p class="text-sm text-gray-500 mb-6">V5.2 Final</p>
             <div class="space-y-4 text-left">
                 <div><label class="block text-xs font-bold text-gray-700 mb-1">帳號</label><input type="text" id="login-user" class="w-full border rounded p-2" placeholder="admin / terry / client"></div>
                 <div><label class="block text-xs font-bold text-gray-700 mb-1">密碼</label><input type="password" id="login-pass" class="w-full border rounded p-2" placeholder="••••"></div>
@@ -31,6 +31,19 @@
                     <span class="cursor-pointer hover:text-psf-600 bg-gray-50 py-1 rounded" onclick="fillLogin('partner', '1234')">夥伴 (王大明)</span>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- Lead Detail Modal -->
+    <div id="lead-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-[600px] overflow-hidden">
+            <div class="bg-psf-600 p-4 text-white font-bold text-lg flex justify-between"><span>線索詳情</span><button onclick="closeLeadModal()" class="text-white hover:text-gray-200"><i class="fa-solid fa-times"></i></button></div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="lead-id">
+                <div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-bold text-gray-700 mb-1">客戶名稱</label><input type="text" id="lead-name" class="w-full border p-2 rounded"></div><div><label class="block text-sm font-bold text-gray-700 mb-1">來源</label><select id="lead-source" class="w-full border p-2 rounded"><option value="Line OA">Line OA</option><option value="官網表單">官網表單</option><option value="轉介">轉介</option><option value="手動新增">手動新增</option></select></div></div>
+                <div><label class="block text-sm font-bold text-gray-700 mb-1">備註</label><textarea id="lead-note" class="w-full border p-2 rounded h-24"></textarea></div>
+                <div><label class="block text-sm font-bold text-gray-700 mb-1">跟進紀錄</label><div class="bg-gray-50 p-3 rounded h-32 overflow-y-auto text-sm text-gray-600 space-y-2" id="lead-history"></div><div class="flex gap-2 mt-2"><input type="text" id="lead-new-log" class="flex-1 border p-2 rounded text-sm" placeholder="輸入跟進情況..."><button onclick="addLeadLog()" class="bg-gray-200 px-3 rounded hover:bg-gray-300 text-sm">紀錄</button></div></div>
+            </div>
+            <div class="p-4 border-t bg-gray-50 flex justify-end gap-3"><button onclick="deleteLeadFromModal()" class="px-4 py-2 text-red-500 hover:text-red-700 font-bold mr-auto">刪除</button><button onclick="saveLeadDetail()" class="px-6 py-2 bg-psf-600 text-white rounded shadow hover:bg-psf-700 font-bold">儲存</button></div>
         </div>
     </div>
     <div id="app-container" class="flex-1 flex overflow-hidden hidden">
@@ -116,22 +129,44 @@
             if(view==='leads') renderLeads(); if(view==='pipeline') renderPipeline('corp'); if(view==='partners') renderPartners(); if(view==='dashboard') renderDashboardCharts();
         }
         function renderLeads() {
-            ['new', 'working', 'qualified'].forEach(s => { 
-                const col = document.getElementById(`col-lead-${s}`); 
-                if(col) col.innerHTML = ''; 
-            });
+            ['new', 'working', 'qualified'].forEach(s => { const col = document.getElementById(`col-lead-${s}`); if(col) col.innerHTML = ''; });
             db.leads.forEach(l => {
-                const col = document.getElementById(`col-lead-${l.status}`); 
-                if(!col) return;
-                const color = {'Line OA':'green','官網表單':'blue','轉介':'purple'}[l.source] || 'gray';
-                const btn = l.status==='qualified' ? `<button onclick="convertLead('${l.id}')" class="w-full mt-3 bg-psf-600 text-white py-1 rounded text-sm hover:bg-psf-700">轉為正式案件</button>`:'';
-                const card = document.createElement('div'); card.id=`card-${l.id}`; card.draggable=true; card.ondragstart=(e)=>drag(e,l.id); card.className = "bg-white p-4 rounded-xl shadow-soft border border-gray-100 mb-3 cursor-grab hover:shadow-md transition";
-                card.innerHTML = `<div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex gap-1"><button onclick="editLead('${l.id}')" class="w-6 h-6 rounded bg-gray-100 text-gray-500"><i class="fa-solid fa-pen"></i></button><button onclick="deleteLead('${l.id}')" class="w-6 h-6 rounded bg-red-100 text-red-500"><i class="fa-solid fa-trash"></i></button></div><div class="flex justify-between mb-2"><span class="bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded font-bold">${l.source}</span><span class="text-xs text-gray-400">${l.time}</span></div><h4 class="font-bold text-slate-800">${l.name}</h4><div class="text-sm text-gray-500 mt-1">${l.note}</div>${btn}`;
+                const col = document.getElementById(`col-lead-${l.status}`); if(!col) return;
+                const btn = l.status==='qualified' ? `<button onclick="event.stopPropagation(); convertLead('${l.id}')" class="w-full mt-3 bg-psf-600 text-white py-1 rounded text-sm hover:bg-psf-700">轉為正式案件</button>`:'';
+                const card = document.createElement('div'); card.id=`card-${l.id}`; card.draggable=true; card.ondragstart=(e)=>drag(e,l.id); card.onclick=()=>openLeadDetail(l.id);
+                card.className = "bg-white p-4 rounded-xl shadow-soft border border-gray-100 mb-3 cursor-pointer hover:shadow-md transition hover:border-psf-300";
+                card.innerHTML = `<div class="flex justify-between mb-2"><span class="bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded font-bold">${l.source}</span><span class="text-xs text-gray-400">${l.time}</span></div><h4 class="font-bold text-slate-800">${l.name}</h4><div class="text-sm text-gray-500 mt-1">${l.note}</div>${btn}`;
                 col.appendChild(card);
             });
         }
+        function openLeadDetail(id) {
+            const l = db.leads.find(x => x.id === id);
+            document.getElementById('lead-id').value = id;
+            document.getElementById('lead-name').value = l.name;
+            document.getElementById('lead-source').value = l.source;
+            document.getElementById('lead-note').value = l.note;
+            const history = document.getElementById('lead-history'); history.innerHTML = '';
+            if(l.history) l.history.forEach(h => history.innerHTML += `<div class="border-l-2 border-gray-300 pl-2 mb-2"><div class="text-xs text-gray-400">${h.date} - ${h.user}</div><div class="text-slate-700">${h.note}</div></div>`);
+            document.getElementById('lead-modal').classList.remove('hidden');
+        }
+        function closeLeadModal() { document.getElementById('lead-modal').classList.add('hidden'); }
+        function saveLeadDetail() {
+            const id = document.getElementById('lead-id').value;
+            const l = db.leads.find(x => x.id === id);
+            if(l) { l.name = document.getElementById('lead-name').value; l.source = document.getElementById('lead-source').value; l.note = document.getElementById('lead-note').value; renderLeads(); closeLeadModal(); }
+        }
+        function deleteLeadFromModal() {
+            const id = document.getElementById('lead-id').value;
+            if(confirm('確定刪除此線索？')) { db.leads = db.leads.filter(l => l.id !== id); renderLeads(); closeLeadModal(); }
+        }
+        function addLeadLog() {
+            const id = document.getElementById('lead-id').value; const note = document.getElementById('lead-new-log').value;
+            if(!note) return;
+            const l = db.leads.find(x => x.id === id);
+            if(l) { if(!l.history) l.history=[]; l.history.unshift({date: new Date().toLocaleDateString(), user: 'Me', note}); openLeadDetail(id); document.getElementById('lead-new-log').value=''; }
+        }
         function renderPipeline(type) { const btnCorp = document.getElementById('btn-flow-corp'); const btnStartup = document.getElementById('btn-flow-startup'); if(type === 'corp') { btnCorp.classList.add('border-psf-500','text-psf-600'); btnCorp.classList.remove('border-transparent','text-gray-500'); btnStartup.classList.remove('border-psf-500','text-psf-600'); btnStartup.classList.add('border-transparent','text-gray-500'); } else { btnStartup.classList.add('border-psf-500','text-psf-600'); btnStartup.classList.remove('border-transparent','text-gray-500'); btnCorp.classList.remove('border-psf-500','text-psf-600'); btnCorp.classList.add('border-transparent','text-gray-500'); } const board = document.getElementById('kanban-board'); board.innerHTML = ''; db.flows[type].forEach((stage, idx) => { const col = document.createElement('div'); col.className = "w-72 flex-shrink-0 flex flex-col h-full bg-slate-100 rounded-2xl p-3 border border-slate-200"; col.innerHTML = `<div class="font-bold text-slate-700 mb-3 px-2 text-sm">${stage}</div><div class="flex-1 space-y-3 pipeline-col overflow-y-auto" ondrop="drop(event, ${idx})" ondragover="allowDrop(event)"></div>`; board.appendChild(col); }); db.cases.forEach(c => { if(c.type !== type) return; const col = document.querySelectorAll('.pipeline-col')[c.stage]; if(col) { const card = document.createElement('div'); card.id=`case-${c.id}`; card.draggable=true; card.ondragstart=(e)=>drag(e,c.id); card.className="bg-white p-4 rounded-xl shadow-soft border-l-4 border-psf-500 cursor-pointer hover:shadow-md transition transform hover:-translate-y-1"; card.onclick = () => drillDownCase(c.client_id === 'CL001' ? '鴻海精密' : 'Case'); card.innerHTML = `<div class="flex justify-between mb-2"><span class="text-xs font-bold text-psf-600 bg-psf-50 px-2 py-0.5 rounded">企業</span><span class="text-xs text-gray-400">2d ago</span></div><h4 class="font-bold text-slate-800">${c.name || 'Unknown'}</h4><div class="text-sm text-gray-500 mt-1">NT$ ${c.req_amount}</div>`; col.appendChild(card); } }); }
-        function renderPartners() { const grid = document.getElementById('partners-grid'); grid.innerHTML = ''; db.partners.forEach(p => { grid.innerHTML += `<div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 hover:shadow-md transition"><div class="flex items-center gap-4 mb-4"><div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl font-bold"><i class="fa-solid fa-building-columns"></i></div><div><h3 class="font-bold text-lg text-slate-800">${p.name}</h3><div class="text-sm text-gray-500">${p.bank}</div></div></div><div class="space-y-2 text-sm text-gray-600"><div class="flex justify-between"><span>核貸率</span><span class="font-bold text-green-600">${p.rate}</span></div></div><button class="w-full mt-4 border border-psf-500 text-psf-500 py-2 rounded-xl hover:bg-psf-50 transition" onclick="alert('詳細績效: ${p.name}')">查看詳情</button></div>`; }); }
+        function renderPartners() { const grid = document.getElementById('partners-grid'); grid.innerHTML = ''; db.partners.forEach(p => { grid.innerHTML += `<div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 hover:shadow-md transition"><div class="flex items-center gap-4 mb-4"><div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl font-bold"><i class="fa-solid fa-building-columns"></i></div><div><h3 class="font-bold text-lg text-slate-800">${p.name} <span class="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500">${p.role}</span></h3><div class="text-sm text-gray-500">${p.bank}</div></div></div><div class="space-y-2 text-sm text-gray-600"><div class="flex justify-between"><span>核貸率</span><span class="font-bold text-green-600">${p.rate}</span></div></div><button class="w-full mt-4 border border-psf-500 text-psf-500 py-2 rounded-xl hover:bg-psf-50 transition" onclick="alert('詳細績效: ${p.name}')">查看詳情</button></div>`; }); }
         let charts = {};
         function renderDashboardCharts() {
             const activeCases = db.cases; const totalCases = activeCases.length;
@@ -140,17 +175,9 @@
             const totalPaid = typeof payouts !== 'undefined' ? payouts.reduce((sum, p) => sum + p.paid_amount, 0) : 0;
             const totalUnpaid = typeof payouts !== 'undefined' ? payouts.reduce((sum, p) => sum + (p.due_amount - p.paid_amount), 0) : 0;
             document.getElementById('dash-kpi-1').innerText = `NT$ ${Math.round(totalApproved/10000)}萬`; document.getElementById('dash-kpi-2').innerText = `NT$ ${Math.round(totalComm/10000)}萬`; document.getElementById('dash-kpi-3').innerText = `NT$ ${Math.round(totalPaid/10000)}萬`; document.getElementById('dash-kpi-4').innerText = `NT$ ${Math.round(totalUnpaid/10000)}萬`;
-            
-            const roleShare = {}; if(typeof payouts !== 'undefined') { payouts.forEach(p => { roleShare[p.role_type] = (roleShare[p.role_type] || 0) + p.due_amount; }); }
-            if(charts['revenue']) charts['revenue'].destroy();
-            const ctx1 = document.getElementById('chart-revenue').getContext('2d'); charts['revenue'] = new Chart(ctx1, { type: 'pie', data: { labels: Object.keys(roleShare), datasets: [{ label: '分潤佔比', data: Object.values(roleShare), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }] }, options: { maintainAspectRatio: false } });
-            
-            const types = {}; activeCases.forEach(c => { types[c.type] = (types[c.type] || 0) + 1; });
-            if(charts['source']) charts['source'].destroy();
-            const ctx2 = document.getElementById('chart-source').getContext('2d'); charts['source'] = new Chart(ctx2, { type: 'doughnut', data: { labels: Object.keys(types).map(t => t==='corp'?'企業融資':'青創貸款'), datasets: [{ data: Object.values(types), backgroundColor: ['#6366f1', '#ec4899'] }] }, options: { maintainAspectRatio: false } });
-            
-            const listContainer = document.getElementById('dash-list-container'); listContainer.innerHTML = '';
-            if(typeof caseLogs !== 'undefined') { caseLogs.slice(0, 3).forEach(l => { const c = db.cases.find(x => x.id === l.case_id); const p = persons.find(x => x.id === l.person_id); listContainer.innerHTML += `<div class="flex items-center gap-3 p-3 bg-gray-50 border-l-4 border-gray-500 rounded"><div class="text-center w-12"><div class="text-xs text-gray-500">LOG</div><div class="font-bold text-lg"><i class="fa-solid fa-history"></i></div></div><div><div class="font-bold text-slate-800">${c ? clients.find(cl=>cl.id===c.client_id).name : 'Unknown'} - ${l.stage}</div><div class="text-xs text-gray-500">${p ? p.name : ''}: ${l.note}</div></div></div>`; }); }
+            const roleShare = {}; if(typeof payouts !== 'undefined') { payouts.forEach(p => { roleShare[p.role_type] = (roleShare[p.role_type] || 0) + p.due_amount; }); } if(charts['revenue']) charts['revenue'].destroy(); const ctx1 = document.getElementById('chart-revenue').getContext('2d'); charts['revenue'] = new Chart(ctx1, { type: 'pie', data: { labels: Object.keys(roleShare), datasets: [{ label: '分潤佔比', data: Object.values(roleShare), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }] }, options: { maintainAspectRatio: false } });
+            const types = {}; activeCases.forEach(c => { types[c.type] = (types[c.type] || 0) + 1; }); if(charts['source']) charts['source'].destroy(); const ctx2 = document.getElementById('chart-source').getContext('2d'); charts['source'] = new Chart(ctx2, { type: 'doughnut', data: { labels: Object.keys(types).map(t => t==='corp'?'企業融資':'青創貸款'), datasets: [{ data: Object.values(types), backgroundColor: ['#6366f1', '#ec4899'] }] }, options: { maintainAspectRatio: false } });
+            const listContainer = document.getElementById('dash-list-container'); listContainer.innerHTML = ''; if(typeof caseLogs !== 'undefined') { caseLogs.slice(0, 3).forEach(l => { const c = db.cases.find(x => x.id === l.case_id); const p = persons.find(x => x.id === l.person_id); listContainer.innerHTML += `<div class="flex items-center gap-3 p-3 bg-gray-50 border-l-4 border-gray-500 rounded"><div class="text-center w-12"><div class="text-xs text-gray-500">LOG</div><div class="font-bold text-lg"><i class="fa-solid fa-history"></i></div></div><div><div class="font-bold text-slate-800">${c ? clients.find(cl=>cl.id===c.client_id).name : 'Unknown'} - ${l.stage}</div><div class="text-xs text-gray-500">${p ? p.name : ''}: ${l.note}</div></div></div>`; }); }
         }
         function drillDownCase(name) { router('case-detail'); document.getElementById('l2-menu').classList.remove('hidden'); document.getElementById('back-btn').classList.remove('hidden'); document.getElementById('page-title').innerText = name; document.getElementById('l2-case-name').innerText = name; document.getElementById('detail-title').innerText = name; document.getElementById('milestones-container').innerHTML = `<div class="min-w-[200px] bg-white border border-purple-200 p-4 rounded-lg shadow-sm"><div class="text-xs text-gray-400">2025/12</div><div class="font-bold">資本額變更</div></div>`; document.getElementById('logs-container').innerHTML = `<div class="relative"><div class="absolute -left-[41px] bg-green-500 w-10 h-10 rounded-full border-4 border-white flex items-center justify-center text-white text-lg"><i class="fa-brands fa-line"></i></div><div class="bg-white p-4 rounded-lg border shadow-sm"><div class="flex justify-between mb-2"><span class="font-bold text-slate-800">LINE OA 對話摘要</span><span class="text-xs text-gray-400">今天 10:30</span></div><p class="text-gray-600 text-sm">客戶詢問進度。</p></div></div>`; }
         function openCaseTab(tab) { document.querySelectorAll('#view-case-detail, #view-docs, #view-finance, #view-bank').forEach(el => el.classList.add('hidden')); if(tab === 'overview') document.getElementById('view-case-detail').classList.remove('hidden'); else if(tab === 'docs') document.getElementById('view-docs').classList.remove('hidden'); else if(tab === 'bank') document.getElementById('view-bank').classList.remove('hidden'); else if(tab === 'finance') { document.getElementById('view-finance').classList.remove('hidden'); renderFinance(); } }
@@ -167,8 +194,16 @@
         function goBack() { router('pipeline'); }
         function allowDrop(ev) { ev.preventDefault(); }
         function drag(ev, id) { ev.dataTransfer.setData("text", id); }
-        function dropLead(ev, s) { ev.preventDefault(); renderLeads(); }
-        function drop(ev, i) { ev.preventDefault(); renderPipeline('corp'); }
+        function dropLead(ev, s) { ev.preventDefault(); const id = ev.dataTransfer.getData("text"); const lead = db.leads.find(l => l.id === id); if(lead) { lead.status = s; renderLeads(); } }
+        function drop(ev, i) { ev.preventDefault(); const id = ev.dataTransfer.getData("text"); const c = db.cases.find(x => x.id === id); if(c) { c.stage = i; renderPipeline(c.type); } }
+
+        window.addEventListener('DOMContentLoaded', () => { 
+            // Check auth? No, show login
+            // But for testing ease, let's keep router dashboard if you want?
+            // User said "Start again", implies fresh start.
+            // I'll leave default as login screen.
+            // But if user refreshes, they need to login.
+        });
     </script>
 </body>
 </html>
